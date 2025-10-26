@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Memory Flip Card Game</title>
+<style>
+        :root {
+            --color-bg-1: rgba(59, 130, 246, 0.08);
+            --color-bg-2: rgba(245, 158, 11, 0.08);
+            --color-bg-3: rgba(34, 197, 94, 0.08);
+            --color-bg-4: rgba(239, 68, 68, 0.08);
+            --color-bg-5: rgba(147, 51, 234, 0.08);
+            --color-bg-6: rgba(249, 115, 22, 0.08);
+            --color-bg-7: rgba(236, 72, 153, 0.08);
+            --color-bg-8: rgba(6, 182, 212, 0.08);
+            --color-background: #fafaf9;
+            --color-surface: #ffffff;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-primary: #0ea5e9;
+            --color-border: rgba(0, 0, 0, 0.1);
+            --color-tile-empty: rgba(238, 228, 218, 0.35);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-background: #1e293b;
+                --color-surface: #334155;
+                --color-text: #f1f5f9;
+                --color-text-secondary: #94a3b8;
+                --color-primary: #38bdf8;
+                --color-border: rgba(255, 255, 255, 0.1);
+                --color-tile-empty: rgba(238, 228, 218, 0.15);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--color-background);
+            color: var(--color-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            touch-action: manipulation;
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .game-container {
+            background: linear-gradient(135deg, var(--color-bg-1), var(--color-bg-5));
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            background: rgba(187, 173, 160, 0.2);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            aspect-ratio: 0.75;
+            perspective: 600px;
+            cursor: pointer;
+            outline: none;
+            transition: transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card:focus {
+            outline: none;
+            transform: scale(1.02);
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 6px;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.15s ease;
+        }
+
+        .card-front {
+            background: var(--color-surface);
+            color: var(--color-text);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: rotateY(180deg);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .message-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #message {
+            font-size: 1rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .card-front, .card-back {
+                font-size: 1.5rem;
+            }
+
+            .game-container {
+                padding: 15px;
+            }
+
+            #gameBoard {
+                gap: 8px;
+                padding: 8px;
+            }
+        }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Memory Flip Card Game</h1>
+        </div>
+
+        <div class="game-container">
+            <div id="gameBoard"></div>
+        </div>
+
+        <div class="message-container">
+            <div id="message"></div>
+            <button id="resetBtn" class="btn btn-primary">Restart Game</button>
+        </div>
+    </div>
+
+<script>
+  const gameBoard = document.getElementById('gameBoard');
+  const message = document.getElementById('message');
+  const resetBtn = document.getElementById('resetBtn');
+
+  // Cards will be emojis representing pairs
+  const cardsArray = ['🍎','🍌','🍇','🥝','🍓','🍍','🥥','🍒'];
+
+  let cards = [];
+  let flippedCards = [];
+  let matchedCount = 0;
+
+  function shuffle(array) {
+    for (let i = array.length -1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function createCard(icon, id) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = id;
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Card ${id + 1}`);
+
+    const inner = document.createElement('div');
+    inner.className = 'card-inner';
+
+    const front = document.createElement('div');
+    front.className = 'card-front';
+
+    const back = document.createElement('div');
+    back.className = 'card-back';
+    back.textContent = icon;
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    card.appendChild(inner);
+
+    const handleCardClick = () => {
+      if (flippedCards.length < 2 && !card.classList.contains('flipped') && !matchedCards.has(id)) {
+        flipCard(card);
+      }
+    };
+
+    card.addEventListener('click', handleCardClick);
+    
+    // Add keyboard accessibility
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleCardClick();
+      }
+    });
+
+    return card;
+  }
+
+  let matchedCards = new Set();
+
+  function flipCard(card) {
+    card.classList.add('flipped');
+    flippedCards.push(card);
+
+    if (flippedCards.length === 2) {
+      checkForMatch();
+    }
+  }
+
+  function checkForMatch() {
+    try {
+      if (flippedCards.length !== 2) {
+        console.warn('Expected 2 flipped cards, got:', flippedCards.length);
+        return;
+      }
+      
+      const [first, second] = flippedCards;
+      const firstId = parseInt(first.dataset.id);
+      const secondId = parseInt(second.dataset.id);
+
+      // Validate IDs
+      if (isNaN(firstId) || isNaN(secondId) || firstId < 0 || secondId < 0 || firstId >= cards.length || secondId >= cards.length) {
+        console.error('Invalid card IDs:', firstId, secondId);
+        flippedCards = [];
+        return;
+      }
+
+      if (cards[firstId] === cards[secondId]) {
+        matchedCards.add(firstId);
+        matchedCards.add(secondId);
+        matchedCount += 2;
+        message.textContent = 'Great! You found a match!';
+        flippedCards = [];
+        if (matchedCount === cards.length) {
+          message.textContent = 'Congratulations! You matched all cards!';
+        }
+      } else {
+        message.textContent = 'Try again!';
+        setTimeout(() => {
+          first.classList.remove('flipped');
+          second.classList.remove('flipped');
+          flippedCards = [];
+          message.textContent = '';
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Error checking match:', error);
+      flippedCards = [];
+      message.textContent = 'Error occurred. Please try again.';
+    }
+  }
+
+  function startGame() {
+    try {
+      matchedCards.clear();
+      matchedCount = 0;
+      message.textContent = '';
+      
+      // Validate cards array
+      if (!cardsArray || cardsArray.length === 0) {
+        throw new Error('Cards array is empty or undefined');
+      }
+      
+      cards = shuffle(cardsArray.concat(cardsArray));
+      gameBoard.innerHTML = '';
+      flippedCards = [];
+
+      cards.forEach((icon, index) => {
+        const card = createCard(icon, index);
+        gameBoard.appendChild(card);
+      });
+      
+      // Focus first card for keyboard navigation
+      const firstCard = gameBoard.querySelector('.card');
+      if (firstCard) {
+        firstCard.focus();
+      }
+    } catch (error) {
+      console.error('Error starting game:', error);
+      message.textContent = 'Error starting game. Please try again.';
+    }
+  }
+
+  resetBtn.addEventListener('click', startGame);
+
+  startGame();
+</script>
+
+</body>
+</html>
